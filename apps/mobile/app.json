@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "SFU Общежития",
+    "slug": "sfu-dorm-super-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "ru.sfu.dormapp"
+    },
+    "android": {
+      "package": "ru.sfu.dormapp",
+      "softwareKeyboardLayoutMode": "pan"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": true,
+            "usesCleartextTraffic": false
+          }
+        }
+      ]
+    ]
+  }
+}

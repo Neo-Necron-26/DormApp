@@ -1,0 +1,31 @@
+{
+  "name": "sfu-dorm-super-app",
+  "version": "1.0.0",
+  "description": "Dormitory services platform with a student personal account and staff dashboards",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "node": ">=20",
+    "npm": ">=10"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "setup": "npm run prisma:generate --workspace=apps/api && npm run prisma:push --workspace=apps/api && npm run seed --workspace=apps/api",
+    "dev:api": "npm run dev --workspace=apps/api",
+    "dev:mobile": "npm run start --workspace=apps/mobile",
+    "dev:admin": "npm run dev --workspace=apps/admin",
+    "build:admin": "npm run build --workspace=apps/admin",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "check": "npm run typecheck && npm run build:admin"
+  },
+  "allowScripts": {
+    "@prisma/client@5.19.1": true,
+    "@prisma/engines@5.19.1": true,
+    "prisma@5.19.1": true,
+    "esbuild@0.28.2": true,
+    "esbuild@0.21.5": true
+  }
+}

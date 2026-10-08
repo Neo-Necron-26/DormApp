@@ -1,0 +1,31 @@
+# Dependencies and build outputs
+node_modules/
+dist/
+build/
+.expo/
+.expo-shared/
+*.tsbuildinfo
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+apps/*/.env
+apps/*/.env.*
+!apps/*/.env.example
+
+# Runtime data
+apps/api/prisma/dev.db
+apps/api/prisma/dev.db-*
+apps/api/uploads/*
+!apps/api/uploads/.gitkeep
+*.log
+
+# Editors and operating systems
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Local development workspaces
+.local-history/

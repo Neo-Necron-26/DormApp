@@ -1,0 +1,407 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// SQLite has no native enum support in Prisma; enum-like fields are plain
+// strings constrained in application code:
+//   User.role            "STUDENT" | "ADMIN" | "LEADERSHIP"
+//   User.residentRole    null | "FLOOR_MONITOR" | "INSPECTOR" | "NEWS_EDITOR" | "REGISTRAR"
+//   Ticket.status        "NEW" | "IN_PROGRESS" | "DONE"
+//   Appeal.status        "PENDING" | "IN_REVIEW" | "RESOLVED"
+//   Payment.period       "MONTH" | "QUARTER" | "YEAR"
+//   Payment.method       "SBP" | "CARD"
+//   ChatChannel.type     "SECTION" | "DORM" | "ANNOUNCEMENTS" | "CAMPUS"
+//   Notification.type    "TICKET_STATUS" | "APPEAL_RESPONSE" | "ANNOUNCEMENT" | "EVENT" |
+//                        "CHAT" | "LOST_FOUND" | "ROLE_ASSIGNED" | "LOGIN" | "MESSAGE" | "CHECKOUT_REMINDER"
+//   Listing.status       "ACTIVE" | "SOLD"
+//   LostFoundItem.kind   "LOST" | "FOUND"
+//   RoomCheck.result     "OK" | "ISSUES"
+//   User.fundingType     "BUDGET" | "PAID"
+//   ScheduleEntry.weekParity  "ALL" | "ODD" | "EVEN"
+//   CertificateRequest.status "NEW" | "READY" | "ISSUED"
+//   CertificateRequest.category "CERTIFICATE" | "CONTRACT" | "FOREIGN"
+//   CertificateRequest.sealType null | "OFFICIAL" | "INSTITUTE"
+//   Facility.type        "LAUNDRY" | "GYM" | "COUNSELING"
+//   MenuItem.mealType    "BREAKFAST" | "LUNCH" | "DINNER"
+//   RoommateRequest.type "SWAP" | "SEEK_ROOMMATE"
+//   RoommateRequest.status "ACTIVE" | "CLOSED"
+//   InvoiceRequest.status "REQUESTED" | "READY" | "PAID"
+model User {
+  id                    String           @id @default(cuid())
+  login                 String           @unique
+  passwordHash          String
+  role                  String           @default("STUDENT")
+  residentRole          String?
+  fullName              String
+  initials              String
+  dormId                Int              @default(6)
+  room                  String
+  section               String?
+  phone                 String?
+  email                 String?
+  emergencyContactName     String?
+  emergencyContactPhone    String?
+  emergencyContactRelation String?
+  medicalNotes          String?
+  maxId                 String?
+  maxVisible            Boolean          @default(false)
+  verified              Boolean          @default(false)
+  dealsCount            Int              @default(0)
+  balance               Int              @default(-1450)
+  checkoutDate          DateTime?
+  lastLoginAt           DateTime?
+  createdAt             DateTime         @default(now())
+  fundingType           String           @default("BUDGET")
+  institute             String?
+  studyGroup            String?
+  studyStatus           String?          @default("Учащийся")
+  programName           String?
+  programLevel          String?
+  studyForm             String?
+  admissionYear         Int?
+  carPlate              String?
+  inn                   String?
+  snils                 String?
+  birthDate             String?
+  passportData          String?
+  passportReplacementConfirmed Boolean @default(false)
+  materialLogs          MaterialLog[]
+  listings              Listing[]
+  favorites             Favorite[]
+  tickets               Ticket[]
+  appeals               Appeal[]
+  payments              Payment[]
+  notifications         Notification[]
+  chatMessages          ChatMessage[]
+  lostFoundItems        LostFoundItem[]
+  contactMessages       ContactMessage[]
+  roomChecks            RoomCheck[]
+  leadershipReports     LeadershipReport[]
+  explanatoryNotes      ExplanatoryNote[]
+  gradeRecords          GradeRecord[]
+  certificateRequests   CertificateRequest[]
+  facilityBookings      FacilityBooking[]
+  roommateRequests      RoommateRequest[]
+  invoiceRequests       InvoiceRequest[]
+}
+
+model Listing {
+  id          String     @id @default(cuid())
+  title       String
+  description String
+  price       Int
+  negotiable  Boolean    @default(false)
+  category    String
+  isUShop     Boolean    @default(false)
+  photos      String     @default("[]")
+  status      String     @default("ACTIVE")
+  dormId      Int
+  room        String
+  createdAt   DateTime   @default(now())
+  sellerId    String
+  seller      User       @relation(fields: [sellerId], references: [id])
+  favorites   Favorite[]
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id])
+
+  @@unique([userId, listingId])
+}
+
+model Ticket {
+  id          String   @id @default(cuid())
+  category    String
+  description String
+  status      String   @default("NEW")
+  comment     String?
+  photos      String   @default("[]")
+  dormId      Int
+  room        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  residentId  String
+  resident    User     @relation(fields: [residentId], references: [id])
+}
+
+model LostFoundItem {
+  id         String   @id @default(cuid())
+  kind       String
+  title      String
+  location   String?
+  photo      String?
+  dormId     Int
+  createdAt  DateTime @default(now())
+  residentId String
+  resident   User     @relation(fields: [residentId], references: [id])
+}
+
+model ContactMessage {
+  id         String   @id @default(cuid())
+  text       String
+  photo      String?
+  dormId     Int
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  residentId String
+  resident   User     @relation(fields: [residentId], references: [id])
+}
+
+model Appeal {
+  id              String    @id @default(cuid())
+  topic           String
+  text            String
+  anonymous       Boolean   @default(false)
+  status          String    @default("PENDING")
+  response        String?
+  photos          String    @default("[]")
+  routedToBastion Boolean   @default(true)
+  dormId          Int
+  createdAt       DateTime  @default(now())
+  respondedAt     DateTime?
+  residentId      String
+  resident        User      @relation(fields: [residentId], references: [id])
+}
+
+model Payment {
+  id         String   @id @default(cuid())
+  amount     Int
+  period     String
+  method     String
+  receiptNo  String
+  createdAt  DateTime @default(now())
+  residentId String
+  resident   User     @relation(fields: [residentId], references: [id])
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  date        DateTime
+  dormId      Int
+  isSfu       Boolean  @default(false)
+  photos      String   @default("[]")
+  createdAt   DateTime @default(now())
+}
+
+model ChatChannel {
+  id       String        @id @default(cuid())
+  type     String
+  dormId   Int?
+  section  String?
+  messages ChatMessage[]
+
+  @@unique([type, dormId, section])
+}
+
+model ChatMessage {
+  id        String      @id @default(cuid())
+  text      String
+  photos    String      @default("[]")
+  eventId   String?
+  createdAt DateTime    @default(now())
+  authorId  String
+  author    User        @relation(fields: [authorId], references: [id])
+  channelId String
+  channel   ChatChannel @relation(fields: [channelId], references: [id])
+}
+
+model ChatChannelRead {
+  id         String   @id @default(cuid())
+  userId     String
+  channelId  String
+  lastReadAt DateTime @default(now())
+
+  @@unique([userId, channelId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String
+  title     String
+  body      String
+  linkType  String?
+  linkId    String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model RoomCheck {
+  id            String   @id @default(cuid())
+  dormId        Int
+  room          String
+  result        String
+  notes         String?
+  createdAt     DateTime @default(now())
+  checkedById   String
+  checkedBy     User     @relation(fields: [checkedById], references: [id])
+}
+
+// A dorm admin's report/message to university leadership ("руководство").
+model LeadershipReport {
+  id        String   @id @default(cuid())
+  dormId    Int
+  title     String
+  text      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+}
+
+// A logged "объяснительная" — a resident's written explanation for a
+// violation, recorded by dorm staff and visible to leadership.
+model ExplanatoryNote {
+  id           String   @id @default(cuid())
+  dormId       Int
+  room         String
+  residentName String
+  reason       String
+  text         String
+  createdAt    DateTime @default(now())
+  createdById  String
+  createdBy    User     @relation(fields: [createdById], references: [id])
+}
+
+// One row of a student's "зачётная книжка" (transcript/gradebook).
+model GradeRecord {
+  id            String   @id @default(cuid())
+  semesterLabel String
+  subject       String
+  kind          String
+  grade         String
+  hours         String?
+  sortOrder     Int      @default(0)
+  residentId    String
+  resident      User     @relation(fields: [residentId], references: [id])
+}
+
+// A study group's weekly class schedule — keyed by `studyGroup` (a plain
+// string on User, not a separate group table) rather than per-resident,
+// since a whole group shares one schedule. `weekParity` follows the
+// standard Russian university biweekly rotation ("чётная/нечётная неделя").
+model ScheduleEntry {
+  id         String  @id @default(cuid())
+  studyGroup String
+  dayOfWeek  Int
+  weekParity String  @default("ALL")
+  startTime  String
+  endTime    String
+  subject    String
+  type       String
+  room       String?
+  teacher    String?
+}
+
+// A student's self-service request for a document ("справка", "договор" or,
+// for foreign students, a "выписка из приказа") — the catalog of allowed
+// `type` values per `category`/`User.fundingType` lives in shared types
+// (`DOCUMENT_TYPES`), not in the DB. `sealType` is only meaningful for the
+// "Справка об обучении" type, which is orderable with either seal.
+model CertificateRequest {
+  id         String   @id @default(cuid())
+  type       String
+  category   String   @default("CERTIFICATE")
+  sealType   String?
+  status     String   @default("NEW")
+  comment    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  residentId String
+  resident   User     @relation(fields: [residentId], references: [id])
+}
+
+// A student's advance request for a payable invoice ("счёт") — e.g. dorm/
+// hotel-service fees or tuition — so it can be prepared ahead of time and
+// the student notified the moment it's ready, instead of staff phoning them.
+model InvoiceRequest {
+  id         String   @id @default(cuid())
+  purpose    String
+  amount     Int?
+  status     String   @default("REQUESTED")
+  comment    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  residentId String
+  resident   User     @relation(fields: [residentId], references: [id])
+}
+
+// A bookable shared amenity (laundry room, gym) — one row per facility, not
+// per time slot; slots are computed on read from open/close time + duration
+// and cross-referenced against FacilityBooking rows for that date.
+model Facility {
+  id          String            @id @default(cuid())
+  dormId      Int
+  name        String
+  type        String
+  openTime    String
+  closeTime   String
+  slotMinutes Int               @default(60)
+  bookings    FacilityBooking[]
+}
+
+model FacilityBooking {
+  id         String   @id @default(cuid())
+  date       String
+  startTime  String
+  createdAt  DateTime @default(now())
+  facilityId String
+  facility   Facility @relation(fields: [facilityId], references: [id])
+  residentId String
+  resident   User     @relation(fields: [residentId], references: [id])
+
+  @@unique([facilityId, date, startTime])
+}
+
+// A recurring weekly canteen menu row (by day-of-week, not a specific date —
+// simpler to seed/maintain than a real per-day menu, and matches how dorm
+// canteens actually publish their schedule).
+model MenuItem {
+  id        String @id @default(cuid())
+  dormId    Int
+  dayOfWeek Int
+  mealType  String
+  name      String
+  price     Int
+  sortOrder Int    @default(0)
+}
+
+// A resident's room-swap ("обмен") or looking-for-roommate ("ищу соседа")
+// post — kept separate from the Listing marketplace since the semantics
+// (a specific room, not a priced item) don't fit that model.
+model RoommateRequest {
+  id          String   @id @default(cuid())
+  type        String
+  room        String
+  desiredRoom String?
+  description String
+  status      String   @default("ACTIVE")
+  createdAt   DateTime @default(now())
+  residentId  String
+  resident    User     @relation(fields: [residentId], references: [id])
+}
+
+// A log for large items (furniture, appliances) brought into the dorm
+model MaterialLog {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  photos      String   @default("[]")
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
+  residentId  String
+  resident    User     @relation(fields: [residentId], references: [id])
+}
